@@ -48,12 +48,12 @@
  #include "diff_match_patch.h"
  int main(int argc, char **argv) {
    diff_match_patch dmp;
-   std::wstring str1 = L"First string in diff";
-   std::wstring str2 = L"Second string in diff";
+   std::string str1 = "First string in diff";
+   std::string str2 = "Second string in diff";
 
    auto patch = dmp.patch_toText(dmp.patch_make(str1, str2));
    auto out = dmp.patch_apply(dmp.patch_fromText(patch), str1);
-   std::wstring strResult = out.first;
+   std::string strResult = out.first;
 
    // here, strResult will equal str2 above.
    return strResult != str2;
@@ -411,7 +411,8 @@ class diff_match_patch {
    * @return HTML representation.
    */
  public:
-  std::wstring diff_prettyHtml(const std::list<Diff> &diffs);
+  std::string diff_prettyHtml(const std::list<Diff> &diffs);
+  std::wstring diff_widePrettyHtml(const std::list<Diff> &diffs);
 
   /**
    * Compute and return the source text (all equalities and deletions).
@@ -419,7 +420,8 @@ class diff_match_patch {
    * @return Source text.
    */
  public:
-  std::wstring diff_text1(const std::list<Diff> &diffs);
+  std::string diff_text1(const std::list<Diff> &diffs);
+  std::wstring diff_wideText1(const std::list<Diff> &diffs);
 
   /**
    * Compute and return the destination text (all equalities and insertions).
@@ -427,7 +429,8 @@ class diff_match_patch {
    * @return Destination text.
    */
  public:
-  std::wstring diff_text2(const std::list<Diff> &diffs);
+  std::string diff_text2(const std::list<Diff> &diffs);
+  std::wstring diff_wideText2(const std::list<Diff> &diffs);
 
   /**
    * Compute the Levenshtein distance; the number of inserted, deleted or
@@ -447,7 +450,8 @@ class diff_match_patch {
    * @return Delta text.
    */
  public:
-  std::wstring diff_toDelta(const std::list<Diff> &diffs);
+  std::string diff_toDelta(const std::list<Diff> &diffs);
+  std::wstring diff_toWideDelta(const std::list<Diff> &diffs);
 
   /**
    * Given the original text1, and an encoded string which describes the
@@ -458,6 +462,8 @@ class diff_match_patch {
    * @throws std::wstring If invalid input.
    */
  public:
+  std::list<Diff> diff_fromDelta(const std::string &text1,
+                                 const std::string &delta);
   std::list<Diff> diff_fromDelta(const std::wstring &text1,
                                  const std::wstring &delta);
 
@@ -472,6 +478,8 @@ class diff_match_patch {
    * @return Best match index or std::wstring::npos.
    */
  public:
+  std::size_t match_main(const std::string &text, const std::string &pattern,
+                         std::size_t loc);
   std::size_t match_main(const std::wstring &text, const std::wstring &pattern,
                          std::size_t loc);
 
@@ -529,6 +537,8 @@ class diff_match_patch {
  public:
   std::list<Patch> patch_make(const std::wstring &text1,
                               const std::wstring &text2);
+  std::list<Patch> patch_make(const std::string &text1,
+                              const std::string &text2);
 
   /**
    * Compute a list of patches to turn text1 into text2.
@@ -551,6 +561,9 @@ class diff_match_patch {
    * &diffs).
    */
  public:
+  std::list<Patch> patch_make(const std::string &text1,
+                              const std::string &text2,
+                              const std::list<Diff> &diffs);
   std::list<Patch> patch_make(const std::wstring &text1,
                               const std::wstring &text2,
                               const std::list<Diff> &diffs);
@@ -563,6 +576,8 @@ class diff_match_patch {
    * @return LinkedList of Patch objects.
    */
  public:
+  std::list<Patch> patch_make(const std::string &text1,
+                              const std::list<Diff> &diffs);
   std::list<Patch> patch_make(const std::wstring &text1,
                               const std::list<Diff> &diffs);
 
@@ -585,6 +600,8 @@ class diff_match_patch {
  public:
   std::pair<std::wstring, std::vector<bool> > patch_apply(
       const std::list<Patch> &patches, const std::wstring &text);
+  std::pair<std::string, std::vector<bool> > patch_apply(
+      const std::list<Patch> &patches, const std::string &text);
 
   /**
    * Add some padding on text start and end so that edges can match something.
@@ -593,7 +610,8 @@ class diff_match_patch {
    * @return The padding string added to each side.
    */
  public:
-  std::wstring patch_addPadding(std::list<Patch> &patches);
+  std::string patch_addPadding(std::list<Patch> &patches);
+  std::wstring patch_addWidePadding(std::list<Patch> &patches);
 
   /**
    * Look through the patches and break up any which are longer than the
@@ -610,7 +628,8 @@ class diff_match_patch {
    * @return Text representation of patches.
    */
  public:
-  std::wstring patch_toText(const std::list<Patch> &patches);
+  std::string patch_toText(const std::list<Patch> &patches);
+  std::wstring patch_toWideText(const std::list<Patch> &patches);
 
   /**
    * Parse a textual representation of patches and return a List of Patch
@@ -621,6 +640,7 @@ class diff_match_patch {
    */
  public:
   std::list<Patch> patch_fromText(const std::wstring &textline);
+  std::list<Patch> patch_fromText(const std::string &textline);
 
   /**
    * A safer version of std::wstring.mid(pos).  This one returns "" instead of

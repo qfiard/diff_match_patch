@@ -539,8 +539,8 @@ TEST_F(DiffMatchPatchTest, DiffPrettyHtml) {
       L"<span>a&para;<br></span><del "
       L"style=\"background:#ffe6e6;\">&lt;B&gt;b&lt;/B&gt;</del><ins "
       L"style=\"background:#e6ffe6;\">c&amp;d</ins>",
-      dmp_->diff_prettyHtml(diffs))
-      << "diff_prettyHtml:";
+      dmp_->diff_widePrettyHtml(diffs))
+      << "diff_widePrettyHtml:";
 }
 
 TEST_F(DiffMatchPatchTest, DiffText) {
@@ -549,8 +549,10 @@ TEST_F(DiffMatchPatchTest, DiffText) {
                            Diff(INSERT, L"ed"),  Diff(EQUAL, L" over "),
                            Diff(DELETE, L"the"), Diff(INSERT, L"a"),
                            Diff(EQUAL, L" lazy")};
-  EXPECT_EQ(L"jumps over the lazy", dmp_->diff_text1(diffs)) << "diff_text1:";
-  EXPECT_EQ(L"jumped over a lazy", dmp_->diff_text2(diffs)) << "diff_text2:";
+  EXPECT_EQ(L"jumps over the lazy", dmp_->diff_wideText1(diffs))
+      << "diff_wideText1:";
+  EXPECT_EQ(L"jumped over a lazy", dmp_->diff_wideText2(diffs))
+      << "diff_wideText2:";
 }
 
 TEST_F(DiffMatchPatchTest, DiffDelta) {
@@ -559,11 +561,12 @@ TEST_F(DiffMatchPatchTest, DiffDelta) {
                            Diff(INSERT, L"ed"),   Diff(EQUAL, L" over "),
                            Diff(DELETE, L"the"),  Diff(INSERT, L"a"),
                            Diff(EQUAL, L" lazy"), Diff(INSERT, L"old dog")};
-  auto text1 = dmp_->diff_text1(diffs);
-  EXPECT_EQ(L"jumps over the lazy", text1) << "diff_text1: Base text.";
+  auto text1 = dmp_->diff_wideText1(diffs);
+  EXPECT_EQ(L"jumps over the lazy", text1) << "diff_wideText1: Base text.";
 
-  auto delta = dmp_->diff_toDelta(diffs);
-  EXPECT_EQ(L"=4\t-1\t+ed\t=6\t-3\t+a\t=5\t+old dog", delta) << "diff_toDelta:";
+  auto delta = dmp_->diff_toWideDelta(diffs);
+  EXPECT_EQ(L"=4\t-1\t+ed\t=6\t-3\t+a\t=5\t+old dog", delta)
+      << "diff_toWideDelta:";
 
   // Convert delta string into a diff.
   EXPECT_EQ(diffs, dmp_->diff_fromDelta(text1, delta))
@@ -573,14 +576,15 @@ TEST_F(DiffMatchPatchTest, DiffDelta) {
   diffs = {Diff(EQUAL, L'\u0680' + std::wstring(L" \000 \t %", 6)),
            Diff(DELETE, L'\u0681' + std::wstring(L" \001 \n ^", 6)),
            Diff(INSERT, L'\u0682' + std::wstring(L" \002 \\ |", 6))};
-  text1 = dmp_->diff_text1(diffs);
+  text1 = dmp_->diff_wideText1(diffs);
   EXPECT_EQ(L'\u0680' + std::wstring(L" \000 \t %", 6) + L'\u0681' +
                 std::wstring(L" \001 \n ^", 6),
             text1)
-      << "diff_text1: Unicode text.";
+      << "diff_wideText1: Unicode text.";
 
-  delta = dmp_->diff_toDelta(diffs);
-  EXPECT_EQ(L"=7\t-7\t+%DA%82 %02 %5C %7C", delta) << "diff_toDelta: Unicode.";
+  delta = dmp_->diff_toWideDelta(diffs);
+  EXPECT_EQ(L"=7\t-7\t+%DA%82 %02 %5C %7C", delta)
+      << "diff_toWideDelta: Unicode.";
 
   EXPECT_EQ(diffs, dmp_->diff_fromDelta(text1, delta))
       << "diff_fromDelta: Unicode.";
@@ -588,13 +592,13 @@ TEST_F(DiffMatchPatchTest, DiffDelta) {
   // Verify pool of unchanged characters.
   diffs = {
       Diff(INSERT, L"A-Z a-z 0-9 - _ . ! ~ * ' ( ) ; / ? : @ & = + $ , #")};
-  auto text2 = dmp_->diff_text2(diffs);
+  auto text2 = dmp_->diff_wideText2(diffs);
   EXPECT_EQ(L"A-Z a-z 0-9 - _ . ! ~ * \' ( ) ; / ? : @ & = + $ , #", text2)
-      << "diff_text2: Unchanged characters.";
+      << "diff_wideText2: Unchanged characters.";
 
-  delta = dmp_->diff_toDelta(diffs);
+  delta = dmp_->diff_toWideDelta(diffs);
   EXPECT_EQ(L"+A-Z a-z 0-9 - _ . ! ~ * \' ( ) ; / ? : @ & = + $ , #", delta)
-      << "diff_toDelta: Unchanged characters.";
+      << "diff_toWideDelta: Unchanged characters.";
 
   // Convert delta string into a diff.
   EXPECT_EQ(diffs, dmp_->diff_fromDelta(L"", delta))
@@ -950,14 +954,14 @@ TEST_F(DiffMatchPatchTest, PatchToText) {
   auto strp =
       L"@@ -21,18 +22,17 @@\n jump\n-s\n+ed\n  over \n-the\n+a\n  laz\n";
   auto patches = dmp_->patch_fromText(strp);
-  EXPECT_EQ(strp, dmp_->patch_toText(patches)) << "patch_toText: Single";
+  EXPECT_EQ(strp, dmp_->patch_toWideText(patches))
+      << "patch_toWideText: Single";
 
   strp =
       L"@@ -1,9 +1,9 @@\n-f\n+F\n oo+fooba\n@@ -7,9 +7,9 @@\n obar\n-,\n+.\n "
-      L" "
-      L"tes\n";
+      L" tes\n";
   patches = dmp_->patch_fromText(strp);
-  EXPECT_EQ(strp, dmp_->patch_toText(patches)) << "patch_toText: Dual";
+  EXPECT_EQ(strp, dmp_->patch_toWideText(patches)) << "patch_toWideText: Dual";
 }
 
 TEST_F(DiffMatchPatchTest, PatchAddContext) {
@@ -990,7 +994,7 @@ TEST_F(DiffMatchPatchTest, PatchAddContext) {
 
 TEST_F(DiffMatchPatchTest, PatchMake) {
   auto patches = dmp_->patch_make(L"", L"");
-  EXPECT_EQ(L"", dmp_->patch_toText(patches)) << "patch_make: Null case";
+  EXPECT_EQ(L"", dmp_->patch_toWideText(patches)) << "patch_make: Null case";
 
   std::wstring text1 = L"The quick brown fox jumps over the lazy dog.";
   std::wstring text2 = L"That quick brown fox jumped over a lazy dog.";
@@ -1000,24 +1004,24 @@ TEST_F(DiffMatchPatchTest, PatchMake) {
   // The second patch must be "-21,17 +21,18", not "-22,17 +21,18" due to
   // rolling context.
   patches = dmp_->patch_make(text2, text1);
-  EXPECT_EQ(expectedPatch, dmp_->patch_toText(patches))
+  EXPECT_EQ(expectedPatch, dmp_->patch_toWideText(patches))
       << "patch_make: Text2+Text1 inputs ";
   expectedPatch =
       L"@@ -1,11 +1,12 @@\n Th\n-e\n+at\n  quick b\n@@ -22,18 +22,17 @@\n "
       L"jump\n-s\n+ed\n  over \n-the\n+a\n  laz\n";
   patches = dmp_->patch_make(text1, text2);
-  EXPECT_EQ(expectedPatch, dmp_->patch_toText(patches))
+  EXPECT_EQ(expectedPatch, dmp_->patch_toWideText(patches))
       << "patch_make: Text1+Text2 inputs ";
   auto diffs = dmp_->diff_main(text1, text2, false);
   patches = dmp_->patch_make(diffs);
-  EXPECT_EQ(expectedPatch, dmp_->patch_toText(patches))
+  EXPECT_EQ(expectedPatch, dmp_->patch_toWideText(patches))
       << "patch_make: Diff input";
 
   patches = dmp_->patch_make(text1, diffs);
-  EXPECT_EQ(expectedPatch, dmp_->patch_toText(patches))
+  EXPECT_EQ(expectedPatch, dmp_->patch_toWideText(patches))
       << "patch_make: Text1+Diff inputs ";
   patches = dmp_->patch_make(text1, text2, diffs);
-  EXPECT_EQ(expectedPatch, dmp_->patch_toText(patches))
+  EXPECT_EQ(expectedPatch, dmp_->patch_toWideText(patches))
       << "patch_make: Text1 + Text2 + Diff inputs(deprecated) ";
   patches =
       dmp_->patch_make(L"`1234567890-=[]\\;',./", L"~!@#$%^&*()_+{}|:\"<>?");
@@ -1025,8 +1029,8 @@ TEST_F(DiffMatchPatchTest, PatchMake) {
       L"@@ -1,21 +1,21 "
       L"@@\n-%601234567890-=%5B%5D%5C;',./"
       L"\n+~!@#$%25%5E&*()_+%7B%7D%7C:%22%3C%3E?\n",
-      dmp_->patch_toText(patches))
-      << "patch_toText: Character encoding.";
+      dmp_->patch_toWideText(patches))
+      << "patch_toWideText: Character encoding.";
   diffs = {Diff(DELETE, L"`1234567890-=[]\\;',./"),
            Diff(INSERT, L"~!@#$%^&*()_+{}|:\"<>?")};
   EXPECT_EQ(diffs, dmp_->patch_fromText(
@@ -1045,7 +1049,7 @@ TEST_F(DiffMatchPatchTest, PatchMake) {
   expectedPatch =
       L"@@ -573,28 +573,31 @@\n cdefabcdefabcdefabcdefabcdef\n+123\n";
   patches = dmp_->patch_make(text1, text2);
-  EXPECT_EQ(expectedPatch, dmp_->patch_toText(patches))
+  EXPECT_EQ(expectedPatch, dmp_->patch_toWideText(patches))
       << "patch_make: Long string with repeats.";
 }
 
@@ -1060,7 +1064,7 @@ TEST_F(DiffMatchPatchTest, PatchSplitMax) {
       L"kl\n+X\n mn\n+X\n op\n+X\n qr\n+X\n st\n+X\n uv\n+X\n wx\n+X\n "
       L"yz\n+X\n 012345\n@@ -25,13 +39,18 @@\n zX01\n+X\n 23\n+X\n 45\n+X\n "
       L"67\n+X\n 89\n+X\n 0\n",
-      dmp_->patch_toText(patches))
+      dmp_->patch_toWideText(patches))
       << "patch_splitMax: #1.";
 
   patches = dmp_->patch_make(
@@ -1068,9 +1072,10 @@ TEST_F(DiffMatchPatchTest, PatchSplitMax) {
       L"45"
       L"67890uvwxyz",
       L"abcdefuvwxyz");
-  auto oldToText = dmp_->patch_toText(patches);
+  auto oldToText = dmp_->patch_toWideText(patches);
   dmp_->patch_splitMax(patches);
-  EXPECT_EQ(oldToText, dmp_->patch_toText(patches)) << "patch_splitMax: # 2. ";
+  EXPECT_EQ(oldToText, dmp_->patch_toWideText(patches))
+      << "patch_splitMax: # 2. ";
   patches = dmp_->patch_make(
       L"123456789012345678901234567890123456789012345678901234567890123456789"
       L"0",
@@ -1081,7 +1086,7 @@ TEST_F(DiffMatchPatchTest, PatchSplitMax) {
       L"+1,4 "
       L"@@\n-9012345678901234567890123456\n 7890\n@@ -57,14 +1,3 "
       L"@@\n-78901234567890\n+abc\n",
-      dmp_->patch_toText(patches))
+      dmp_->patch_toWideText(patches))
       << "patch_splitMax: #3.";
 
   patches = dmp_->patch_make(
@@ -1095,32 +1100,33 @@ TEST_F(DiffMatchPatchTest, PatchSplitMax) {
   EXPECT_EQ(
       L"@@ -2,32 +2,32 @@\n bcdefghij , h : \n-0\n+1\n  , t : 1 abcdef\n@@ "
       L"-29,32 +29,32 @@\n bcdefghij , h : \n-0\n+1\n  , t : 1 abcdef\n",
-      dmp_->patch_toText(patches))
+      dmp_->patch_toWideText(patches))
       << "patch_splitMax: #4.";
 }
 
 TEST_F(DiffMatchPatchTest, PatchAddPadding) {
   auto patches = dmp_->patch_make(L"", L"test");
-  EXPECT_EQ(L"@@ -0,0 +1,4 @@\n+test\n", dmp_->patch_toText(patches))
+  EXPECT_EQ(L"@@ -0,0 +1,4 @@\n+test\n", dmp_->patch_toWideText(patches))
       << "patch_addPadding: Both edges full.";
   dmp_->patch_addPadding(patches);
   EXPECT_EQ(L"@@ -1,8 +1,12 @@\n %01%02%03%04\n+test\n %01%02%03%04\n",
-            dmp_->patch_toText(patches))
+            dmp_->patch_toWideText(patches))
       << "patch_addPadding: Both edges full.";
   patches = dmp_->patch_make(L"XY", L"XtestY");
-  EXPECT_EQ(L"@@ -1,2 +1,6 @@\n X\n+test\n Y\n", dmp_->patch_toText(patches))
+  EXPECT_EQ(L"@@ -1,2 +1,6 @@\n X\n+test\n Y\n",
+            dmp_->patch_toWideText(patches))
       << "patch_addPadding: Both edges partial.";
   dmp_->patch_addPadding(patches);
   EXPECT_EQ(L"@@ -2,8 +2,12 @@\n %02%03%04X\n+test\n Y%01%02%03\n",
-            dmp_->patch_toText(patches))
+            dmp_->patch_toWideText(patches))
       << "patch_addPadding: Both edges partial.";
   patches = dmp_->patch_make(L"XXXXYYYY", L"XXXXtestYYYY");
   EXPECT_EQ(L"@@ -1,8 +1,12 @@\n XXXX\n+test\n YYYY\n",
-            dmp_->patch_toText(patches))
+            dmp_->patch_toWideText(patches))
       << "patch_addPadding: Both edges none.";
   dmp_->patch_addPadding(patches);
   EXPECT_EQ(L"@@ -5,8 +5,12 @@\n XXXX\n+test\n YYYY\n",
-            dmp_->patch_toText(patches))
+            dmp_->patch_toWideText(patches))
       << "patch_addPadding: Both edges none.";
 }
 
@@ -1233,16 +1239,16 @@ TEST_F(DiffMatchPatchTest, PatchApply) {
   dmp_->Match_Distance = 1000;
 
   patches = dmp_->patch_make(L"", L"test");
-  auto patchStr = dmp_->patch_toText(patches);
+  auto patchStr = dmp_->patch_toWideText(patches);
   dmp_->patch_apply(patches, L"");
-  EXPECT_EQ(patchStr, dmp_->patch_toText(patches))
+  EXPECT_EQ(patchStr, dmp_->patch_toWideText(patches))
       << "patch_apply: No side effects.";
 
   patches = dmp_->patch_make(L"The quick brown fox jumps over the lazy dog.",
                              L"Woof");
-  patchStr = dmp_->patch_toText(patches);
+  patchStr = dmp_->patch_toWideText(patches);
   dmp_->patch_apply(patches, L"The quick brown fox jumps over the lazy dog.");
-  EXPECT_EQ(patchStr, dmp_->patch_toText(patches))
+  EXPECT_EQ(patchStr, dmp_->patch_toWideText(patches))
       << "patch_apply: No side effects with major delete.";
 
   patches = dmp_->patch_make(L"", L"test");

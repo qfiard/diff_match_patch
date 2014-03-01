@@ -1316,7 +1316,13 @@ std::size_t diff_match_patch::diff_xIndex(const std::list<Diff> &diffs,
   return last_chars2 + (loc - last_chars1);
 }
 
-std::wstring diff_match_patch::diff_prettyHtml(const std::list<Diff> &diffs) {
+std::string diff_match_patch::diff_prettyHtml(const std::list<Diff> &diffs) {
+  UnicodeEncoder unicode_encoder;
+  return unicode_encoder.to_bytes(diff_widePrettyHtml(diffs));
+}
+
+std::wstring diff_match_patch::diff_widePrettyHtml(
+    const std::list<Diff> &diffs) {
   std::wstring html;
   std::wstring text;
   for (const auto &aDiff : diffs) {
@@ -1340,7 +1346,12 @@ std::wstring diff_match_patch::diff_prettyHtml(const std::list<Diff> &diffs) {
   return html;
 }
 
-std::wstring diff_match_patch::diff_text1(const std::list<Diff> &diffs) {
+std::string diff_match_patch::diff_text1(const std::list<Diff> &diffs) {
+  UnicodeEncoder unicode_encoder;
+  return unicode_encoder.to_bytes(diff_wideText1(diffs));
+}
+
+std::wstring diff_match_patch::diff_wideText1(const std::list<Diff> &diffs) {
   std::wstring text;
   for (const auto &aDiff : diffs) {
     if (aDiff.operation != INSERT) {
@@ -1350,7 +1361,12 @@ std::wstring diff_match_patch::diff_text1(const std::list<Diff> &diffs) {
   return text;
 }
 
-std::wstring diff_match_patch::diff_text2(const std::list<Diff> &diffs) {
+std::string diff_match_patch::diff_text2(const std::list<Diff> &diffs) {
+  UnicodeEncoder unicode_encoder;
+  return unicode_encoder.to_bytes(diff_wideText2(diffs));
+}
+
+std::wstring diff_match_patch::diff_wideText2(const std::list<Diff> &diffs) {
   std::wstring text;
   for (const auto &aDiff : diffs) {
     if (aDiff.operation != DELETE) {
@@ -1384,7 +1400,12 @@ std::size_t diff_match_patch::diff_levenshtein(const std::list<Diff> &diffs) {
   return levenshtein;
 }
 
-std::wstring diff_match_patch::diff_toDelta(const std::list<Diff> &diffs) {
+std::string diff_match_patch::diff_toDelta(const std::list<Diff> &diffs) {
+  UnicodeEncoder unicode_encoder;
+  return unicode_encoder.to_bytes(diff_toWideDelta(diffs));
+}
+
+std::wstring diff_match_patch::diff_toWideDelta(const std::list<Diff> &diffs) {
   std::wstringstream text;
   for (const auto &aDiff : diffs) {
     switch (aDiff.operation) {
@@ -1406,6 +1427,13 @@ std::wstring diff_match_patch::diff_toDelta(const std::list<Diff> &diffs) {
     return res.substr(0, res.size() - 1);
   }
   return res;
+}
+
+std::list<Diff> diff_match_patch::diff_fromDelta(const std::string &text1,
+                                                 const std::string &delta) {
+  UnicodeEncoder unicode_encoder;
+  return diff_fromDelta(unicode_encoder.from_bytes(text1),
+                        unicode_encoder.from_bytes(delta));
 }
 
 std::list<Diff> diff_match_patch::diff_fromDelta(const std::wstring &text1,
@@ -1457,6 +1485,14 @@ std::list<Diff> diff_match_patch::diff_fromDelta(const std::wstring &text1,
 }
 
 //  MATCH FUNCTIONS
+
+std::size_t diff_match_patch::match_main(const std::string &text,
+                                         const std::string &pattern,
+                                         std::size_t loc) {
+  UnicodeEncoder unicode_encoder;
+  return match_main(unicode_encoder.from_bytes(text),
+                    unicode_encoder.from_bytes(pattern), loc);
+}
 
 std::size_t diff_match_patch::match_main(const std::wstring &text,
                                          const std::wstring &pattern,
@@ -1648,6 +1684,13 @@ void diff_match_patch::patch_addContext(Patch &patch,
   patch.size2 += prefix.size() + suffix.size();
 }
 
+std::list<Patch> diff_match_patch::patch_make(const std::string &text1,
+                                              const std::string &text2) {
+  UnicodeEncoder unicode_encoder;
+  return patch_make(unicode_encoder.from_bytes(text1),
+                    unicode_encoder.from_bytes(text2));
+}
+
 std::list<Patch> diff_match_patch::patch_make(const std::wstring &text1,
                                               const std::wstring &text2) {
   // No diffs provided, compute our own.
@@ -1662,8 +1705,16 @@ std::list<Patch> diff_match_patch::patch_make(const std::wstring &text1,
 
 std::list<Patch> diff_match_patch::patch_make(const std::list<Diff> &diffs) {
   // No origin string provided, compute our own.
-  const std::wstring text1 = diff_text1(diffs);
+  const std::wstring text1 = diff_wideText1(diffs);
   return patch_make(text1, diffs);
+}
+
+std::list<Patch> diff_match_patch::patch_make(const std::string &text1,
+                                              const std::string & /*text2*/,
+                                              const std::list<Diff> &diffs) {
+  // text2 is entirely unused.
+  UnicodeEncoder unicode_encoder;
+  return patch_make(unicode_encoder.from_bytes(text1), diffs);
 }
 
 std::list<Patch> diff_match_patch::patch_make(const std::wstring &text1,
@@ -1671,6 +1722,12 @@ std::list<Patch> diff_match_patch::patch_make(const std::wstring &text1,
                                               const std::list<Diff> &diffs) {
   // text2 is entirely unused.
   return patch_make(text1, diffs);
+}
+
+std::list<Patch> diff_match_patch::patch_make(const std::string &text1,
+                                              const std::list<Diff> &diffs) {
+  UnicodeEncoder unicode_encoder;
+  return patch_make(unicode_encoder.from_bytes(text1), diffs);
 }
 
 std::list<Patch> diff_match_patch::patch_make(const std::wstring &text1,
@@ -1769,6 +1826,14 @@ std::list<Patch> diff_match_patch::patch_deepCopy(
   return patchesCopy;
 }
 
+std::pair<std::string, std::vector<bool> > diff_match_patch::patch_apply(
+    const std::list<Patch> &patches, const std::string &text) {
+  UnicodeEncoder unicode_encoder;
+  auto wide_result = patch_apply(patches, unicode_encoder.from_bytes(text));
+  return std::make_pair(unicode_encoder.to_bytes(wide_result.first),
+                        wide_result.second);
+}
+
 std::pair<std::wstring, std::vector<bool> > diff_match_patch::patch_apply(
     const std::list<Patch> &patches, const std::wstring &sourceText) {
   std::wstring text = sourceText;  // Copy to preserve original.
@@ -1780,7 +1845,7 @@ std::pair<std::wstring, std::vector<bool> > diff_match_patch::patch_apply(
   // Deep copy the patches so that no changes are made to originals.
   auto patchesCopy = patch_deepCopy(patches);
 
-  std::wstring nullPadding = patch_addPadding(patchesCopy);
+  std::wstring nullPadding = patch_addWidePadding(patchesCopy);
   text = nullPadding + text + nullPadding;
   patch_splitMax(patchesCopy);
 
@@ -1793,7 +1858,7 @@ std::pair<std::wstring, std::vector<bool> > diff_match_patch::patch_apply(
   std::vector<bool> results(patchesCopy.size());
   for (const auto &aPatch : patchesCopy) {
     std::size_t expected_loc = aPatch.start2 + delta;
-    std::wstring text1 = diff_text1(aPatch.diffs);
+    std::wstring text1 = diff_wideText1(aPatch.diffs);
     std::size_t start_loc;
     std::size_t end_loc = std::wstring::npos;
     if (text1.size() > Match_MaxBits) {
@@ -1830,7 +1895,7 @@ std::pair<std::wstring, std::vector<bool> > diff_match_patch::patch_apply(
       }
       if (text1 == text2) {
         // Perfect match, just shove the replacement text in.
-        text = text.substr(0, start_loc) + diff_text2(aPatch.diffs) +
+        text = text.substr(0, start_loc) + diff_wideText2(aPatch.diffs) +
                safeSubStr(text, start_loc + text1.size());
       } else {
         // Imperfect match.  Run a diff to get a framework of equivalent
@@ -1875,7 +1940,12 @@ std::pair<std::wstring, std::vector<bool> > diff_match_patch::patch_apply(
   return std::pair<std::wstring, std::vector<bool> >(text, results);
 }
 
-std::wstring diff_match_patch::patch_addPadding(std::list<Patch> &patches) {
+std::string diff_match_patch::patch_addPadding(std::list<Patch> &patches) {
+  UnicodeEncoder unicode_encoder;
+  return unicode_encoder.to_bytes(patch_addWidePadding(patches));
+}
+
+std::wstring diff_match_patch::patch_addWidePadding(std::list<Patch> &patches) {
   short paddingLength = Patch_Margin;
   std::wstring nullPadding = L"";
   for (short x = 1; x <= paddingLength; x++) {
@@ -2002,13 +2072,13 @@ void diff_match_patch::patch_splitMax(std::list<Patch> &patches) {
         }
       }
       // Compute the head context for the next patch.
-      precontext = diff_text2(patch.diffs);
+      precontext = diff_wideText2(patch.diffs);
       precontext = safeSubStr(precontext, precontext.size() - Patch_Margin);
       // Append the end context for this patch.
-      if (diff_text1(bigpatch->diffs).size() > Patch_Margin) {
-        postcontext = diff_text1(bigpatch->diffs).substr(0, Patch_Margin);
+      if (diff_wideText1(bigpatch->diffs).size() > Patch_Margin) {
+        postcontext = diff_wideText1(bigpatch->diffs).substr(0, Patch_Margin);
       } else {
-        postcontext = diff_text1(bigpatch->diffs);
+        postcontext = diff_wideText1(bigpatch->diffs);
       }
       if (!postcontext.empty()) {
         patch.size1 += postcontext.size();
@@ -2027,12 +2097,23 @@ void diff_match_patch::patch_splitMax(std::list<Patch> &patches) {
   }
 }
 
-std::wstring diff_match_patch::patch_toText(const std::list<Patch> &patches) {
+std::string diff_match_patch::patch_toText(const std::list<Patch> &patches) {
+  UnicodeEncoder unicode_encoder;
+  return unicode_encoder.to_bytes(patch_toWideText(patches));
+}
+
+std::wstring diff_match_patch::patch_toWideText(
+    const std::list<Patch> &patches) {
   std::wstring text;
   for (const auto &aPatch : patches) {
     text += aPatch.toString();
   }
   return text;
+}
+
+std::list<Patch> diff_match_patch::patch_fromText(const std::string &textline) {
+  UnicodeEncoder unicode_encoder;
+  return patch_fromText(unicode_encoder.from_bytes(textline));
 }
 
 std::list<Patch> diff_match_patch::patch_fromText(
