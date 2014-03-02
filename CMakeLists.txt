@@ -5,6 +5,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 add_library(diff_match_patch diff_match_patch.cc)
 
+INSTALL(
+    TARGETS diff_match_patch LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
+INSTALL(FILES diff_match_patch.h DESTINATION include)
+
 add_executable(example example.cc)
 target_link_libraries(example diff_match_patch)
 
