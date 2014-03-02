@@ -609,8 +609,8 @@ TEST_F(DiffMatchPatchTest, DiffDelta) {
     dmp_->diff_fromDelta(text1 + L"x", delta);
     EXPECT_TRUE(false) << "diff_fromDelta: Too long.";
   }
-  catch (const std::wstring &e) {
-    EXPECT_EQ(L"Delta size (0) smaller than source text size (15)", e)
+  catch (const std::string &e) {
+    EXPECT_EQ("Delta size (0) smaller than source text size (15)", e)
         << "diff_fromDelta: Too long.";
   }
   catch (...) {
@@ -622,8 +622,8 @@ TEST_F(DiffMatchPatchTest, DiffDelta) {
     dmp_->diff_fromDelta(text1.substr(1), delta);
     EXPECT_TRUE(false) << "diff_fromDelta: Too short.";
   }
-  catch (const std::wstring &e) {
-    EXPECT_EQ(L"Delta size (0) smaller than source text size (13)", e)
+  catch (const std::string &e) {
+    EXPECT_EQ("Delta size (0) smaller than source text size (13)", e)
         << "diff_fromDelta: Too short.";
   }
   catch (...) {
@@ -942,8 +942,8 @@ TEST_F(DiffMatchPatchTest, PatchFromText) {
     dmp_->patch_fromText(L"Bad\nPatch\n");
     EXPECT_TRUE(false) << "patch_fromText: #5.";
   }
-  catch (const std::wstring &e) {
-    EXPECT_EQ(L"Invalid patch string: Bad", e) << "patch_fromText: #5.";
+  catch (const std::string &e) {
+    EXPECT_EQ("Invalid patch string: Bad", e) << "patch_fromText: #5.";
   }
   catch (...) {
     EXPECT_TRUE(false) << "patch_fromText: #5.";

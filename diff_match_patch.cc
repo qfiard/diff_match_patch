@@ -63,7 +63,7 @@ std::wstring Diff::strOperation(Operation op) {
     case EQUAL:
       return L"EQUAL";
   }
-  throw L"Invalid operation.";
+  throw "Invalid operation.";
 }
 
 /**
@@ -98,18 +98,24 @@ namespace {
 
 int64_t AsInt64(const std::wstring &str) {
   int64_t res;
-  if (swscanf(str.c_str(), L"%lld", &res) != 1) throw L"Not an int64: " + str;
+  if (swscanf(str.c_str(), L"%lld", &res) != 1) {
+    UnicodeEncoder unicode_encoder;
+    throw "Not an int64: " + unicode_encoder.to_bytes(str);
+  }
   return res;
 }
 
 std::size_t AsSizeT(const std::wstring &str) {
   std::size_t res;
-  if (swscanf(str.c_str(), L"%lu", &res) != 1) throw L"Not a size_t: " + str;
+  if (swscanf(str.c_str(), L"%lu", &res) != 1) {
+    UnicodeEncoder unicode_encoder;
+    throw "Not a size_t: " + unicode_encoder.to_bytes(str);
+  }
   return res;
 }
 
-std::wstring AsString(std::size_t value) {
-  std::wstringstream ss;
+std::string AsString(std::size_t value) {
+  std::stringstream ss;
   ss << value;
   return ss.str();
 }
@@ -1189,7 +1195,7 @@ void diff_match_patch::diff_cleanupMerge(std::list<Diff> &diffs) {
               if (it != diffs.begin()) {
                 --it;
                 if (it->operation != EQUAL) {
-                  throw L"Previous diff should have been an equality.";
+                  throw "Previous diff should have been an equality.";
                 }
                 it->text += text_insert.substr(0, commonsize);
                 ++it;
@@ -1460,7 +1466,9 @@ std::list<Diff> diff_match_patch::diff_fromDelta(const std::wstring &text1,
       case L'=': {
         int64_t n = AsInt64(param);
         if (n < 0) {
-          throw L"Negative number in diff_fromDelta: " + param;
+          UnicodeEncoder unicode_encoder;
+          throw "Negative number in diff_fromDelta: " +
+              unicode_encoder.to_bytes(param);
         }
         std::wstring text;
         text = safeSubStr(text1, pointer, n);
@@ -1472,14 +1480,16 @@ std::list<Diff> diff_match_patch::diff_fromDelta(const std::wstring &text1,
         }
         break;
       }
-      default:
-        throw L"Invalid diff operation in diff_fromDelta: " +
-            std::wstring(1, token[0]);
+      default: {
+        UnicodeEncoder unicode_encoder;
+        throw "Invalid diff operation in diff_fromDelta: " +
+            unicode_encoder.to_bytes(std::wstring(1, token[0]));
+      }
     }
   }
   if (pointer != text1.size()) {
-    throw L"Delta size (" + AsString(pointer) +
-        L") smaller than source text size (" + AsString(text1.size()) + L")";
+    throw "Delta size (" + AsString(pointer) +
+        ") smaller than source text size (" + AsString(text1.size()) + ")";
   }
   return diffs;
 }
@@ -1518,7 +1528,7 @@ std::size_t diff_match_patch::match_bitap(const std::wstring &text,
                                           const std::wstring &pattern,
                                           std::size_t loc) {
   if (!(Match_MaxBits == 0 || pattern.size() <= Match_MaxBits)) {
-    throw L"Pattern too long for this application.";
+    throw "Pattern too long for this application.";
   }
 
   // Initialise the alphabet.
@@ -2135,7 +2145,8 @@ std::list<Patch> diff_match_patch::patch_fromText(
     }
     std::wsmatch matches;
     if (!std::regex_match(text.front(), matches, patchHeader)) {
-      throw L"Invalid patch string: " + text.front();
+      UnicodeEncoder unicode_encoder;
+      throw "Invalid patch string: " + unicode_encoder.to_bytes(text.front());
     }
 
     patch = Patch();
@@ -2185,8 +2196,10 @@ std::list<Patch> diff_match_patch::patch_fromText(
         break;
       } else {
         // WTF?
-        throw L"Invalid patch mode '" + std::wstring(1, sign) + L"' in: " +
-            line;
+        UnicodeEncoder unicode_encoder;
+        throw "Invalid patch mode '" +
+            unicode_encoder.to_bytes(std::wstring(1, sign)) + "' in: " +
+            unicode_encoder.to_bytes(line);
       }
       text.pop_front();
     }
